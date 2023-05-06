@@ -17,8 +17,10 @@ resource "google_sql_database" "playlist" {
 resource "google_sql_user" "playlist_user" {
   name     = "spotmusicbackend"
   password = "$p@tmusic"
-  instance  = google_sql_database_instance.playlist-sql.name
+  instance = google_sql_database_instance.playlist-sql.name
   host     = "%"
+  port     = 3306
+  database = "playlist"
 }
 
 resource "google_storage_bucket_object" "sql_script" {
@@ -33,9 +35,12 @@ resource "null_resource" "execute_script" {
   depends_on = [google_sql_user.playlist_user]
 
   provisioner "local-exec" {
-    command = "cat Playlist.sql | mysql -u ${google_sql_user.playlist_user.name} -h ${google_sql_database_instance.playlist-sql.ip_address} -p${google_sql_user.playlist_user.password} ${google_sql_database.playlist.name}"
+    command = "PGPASSWORD=${MYSQL_PWD} psql -f Playlist.sql -p ${MYSQL_PORT} -U ${MYSQL_USERNAME} ${MYSQL_DATABASE}"
     environment = {
       MYSQL_PWD = google_sql_user.playlist_user.password
+      MYSQL_PORT = google_sql_user.playlist_user.port
+      MYSQL_USERNAME = google_sql_user.playlist_user.name
+      MYSQL_DATABASE = google_sql_user.playlist_user.database
     }
   }
 }
