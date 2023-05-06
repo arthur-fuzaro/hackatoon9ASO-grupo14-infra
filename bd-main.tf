@@ -1,9 +1,3 @@
-provider "google" {
-  credentials = file("./grupo-14-c7acd53e16df.json")
-  project     = "grupo-14"
-  region      = "us-central1-a"
-}
-
 resource "google_sql_database_instance" "playlist-sql" {
   name             = "playlist-sql"
   database_version = "MYSQL_8_0"
@@ -31,7 +25,7 @@ resource "google_storage_bucket_object" "sql_script" {
   name   = "Playlist.sql"
   bucket = "playlist_bucket_grupo14"
 
-  content = file("${path.module}/Playlist.sql")
+  content = file("Playlist.sql")
 }
 
 
@@ -39,7 +33,7 @@ resource "null_resource" "execute_script" {
   depends_on = [google_sql_user.playlist_user]
 
   provisioner "local-exec" {
-    command = "cat ${path.module}/Playlist.sql | mysql -u ${google_sql_user.playlist_user.name} -h ${google_sql_database_instance.playlist-sql.ip_address} -p${google_sql_user.playlist_user.password} ${google_sql_database.playlist.name}"
+    command = "cat Playlist.sql | mysql -u ${google_sql_user.playlist_user.name} -h ${google_sql_database_instance.playlist-sql.ip_address} -p${google_sql_user.playlist_user.password} ${google_sql_database.playlist.name}"
     environment = {
       MYSQL_PWD = google_sql_user.playlist_user.password
     }
